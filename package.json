@@ -1,7 +1,7 @@
 {
   "name": "earthquake_risk_tokyo",
   "version": "1.0.0",
-  "description": "Simple frontend example for earthquake risk search",
+  "description": "comprehensive risk search of the district",
   "main": "server.js",
   "type": "module",
   "scripts": {

@@ -1,9 +1,13 @@
 import {createClient} from '@supabase/supabase-js';
 import {config} from "dotenv";
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+
 
 config();
 const app = express();
+app.use(express.json());
 app.use(express.static("public"));
 
 // Supabase consts
@@ -11,6 +15,10 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const ANON_KEY = process.env.SUPABASE_API_KEY;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_API_KEY;
 const PORT = process.env.PORT || 3000;
+
+// deploy
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Table Names
 const TABLE_EARTHQUAKE = "earthquake_risk_full";
@@ -160,7 +168,17 @@ app.get("/api/search_description", async (req, res) => {
     }
 })
 
-// start localhost server
+
+//----------------------------
+// deploy
+//----------------------------
+
+// deriver dependent files
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// start server
 app.listen(PORT, () => {
-    console.log(`Server running`);
+    console.log(`Server running on port: ${PORT}`);
 });
