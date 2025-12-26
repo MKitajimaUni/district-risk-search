@@ -1,0 +1,19 @@
+{
+  "name": "earthquake_risk_tokyo",
+  "version": "1.0.0",
+  "description": "Simple frontend example for earthquake risk search",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.86.0",
+    "dotenv": "^17.2.3",
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2"
+  },
+  "keywords": [],
+  "author": "Mitsuhiro Kitajima",
+  "license": "ISC"
+}

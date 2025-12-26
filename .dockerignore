@@ -1,0 +1,8 @@
+node_modules
+__pycache__
+*.csv
+*.py
+.git
+.gitignore
+README.md
+.env
