@@ -7,55 +7,77 @@
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="app.js"></script>
 </head>
 <body>
+<div class="container pt-3">
+    <h1 class="text-center mb-4">東京都　地域危険性検索ツール</h1>
+    <div id="home" class="container mb-4">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">区市町名</label>
+                <input id="municipality" type="text" class="form-control" placeholder="例：新宿区">
+            </div>
 
-<h1 class="text-center mb-4">東京都　地域危険性検索ツール</h1>
-<div id="home" class="container mb-4">
-    <div class="row g-3">
-        <div class="col-md-6">
-            <label class="form-label">区市町名</label>
-            <input id="municipality" type="text" class="form-control" placeholder="例：新宿区">
+            <div class="col-md-6">
+                <label class="form-label">町丁目名</label>
+                <input id="district" type="text" class="form-control" placeholder="例：西新宿1丁目">
+            </div>
         </div>
 
-        <div class="col-md-6">
-            <label class="form-label">町丁目名</label>
-            <input id="district" type="text" class="form-control" placeholder="例：西新宿1丁目">
+        <div class="mt-4 text-end">
+            <button class="btn btn-primary btn-lg" onclick="searchData()">検索</button>
         </div>
     </div>
 
-    <div class="mt-4 text-end">
-        <button class="btn btn-primary btn-lg" onclick="searchData()">検索</button>
-    </div>
-</div>
+    <div id="result" class="container mb-4" style="display:none;">
+        <h2 id="result_title" class="mb-4"></h2>
 
-<div id="result" class="container mb-4" style="display:none;">
-    <h2 id="result_title" class="mb-4"></h2>
-
-    <div id="hazard_map" class="mb-4">
-        <h2>ハザードマップ</h2>
-        <div id="search-form" class="mb-3">
-            <label for="flood-select">知りたい情報を選択してください:</label>
-            <select class="form-select" name="flood" id="flood-select">
-                <option value="" disabled>選択してください</option>
-                <option value="river">洪水浸水想定区域（計画規模（現在の凡例））</option>
-                <option value="pluvial">（福生市のみ）内水（雨水出水）浸水想定区域</option>
-                <option value="river-max">洪水浸水想定区域（想定最大規模）</option>
-                <option value="tsunami">（島嶼部のみ）津波浸水想定</option>
-            </select>
-            <button type="button" class="btn btn-secondary" onclick="addMapLayer()">検索</button>
-            <p id="map-current-state" class="form-text text-muted"></p>
+        <div id="hazard_map" class="mb-4">
+            <h2>ハザードマップ</h2>
+            <div id="search-form" class="mb-3">
+                <label for="flood-select">知りたい情報を選択してください:</label>
+                <select class="form-select" name="flood" id="flood-select">
+                    <option value="" disabled>選択してください</option>
+                    <option value="river">洪水浸水想定区域（計画規模（現在の凡例））</option>
+                    <option value="pluvial">（福生市のみ）内水（雨水出水）浸水想定区域</option>
+                    <option value="river-max">洪水浸水想定区域（想定最大規模）</option>
+                    <option value="tsunami">（島嶼部のみ）津波浸水想定</option>
+                </select>
+                <button type="button" class="btn btn-secondary" onclick="addMapLayer()">検索</button>
+                <p id="map-current-state" class="form-text text-muted"></p>
+            </div>
+            <div id="map_flood" style="height: 300px;" class="mb-5"></div>
         </div>
-        <div id="map_flood" style="height: 300px;" class="mb-5"></div>
-    </div>
 
-    <div id="result_earthquake" class="mb-5"></div>
-    <div id="result_crime" class="mb-5"></div>
-    <div id="result_flood" class="mb-5"></div>
-    <div id="result_title_detailed" class="mb-4"></div>
-    <div id="result_earthquake_detailed" class="mb-5"></div>
-    <div id="result_crime_detailed" class="mb-5"></div>
+        <div id="result_earthquake" class="mb-5"></div>
+
+        <div id="result_crime" class="mb-5">
+            <div id="result_crime_card" class="mb-3"></div>
+            <div id="result_crime_graph" style="height: 300px;">
+                <h5>グラフで見る</h5>
+                <canvas id="result_crime_chart"></canvas>
+            </div>
+        </div>
+
+        <div id="result_flood" class="mb-5"></div>
+        <div id="result_title_detailed" class="mb-4"></div>
+        <div id="result_earthquake_detailed" class="mb-5"></div>
+        <div id="result_crime_detailed" class="mb-5"></div>
+
+        <div id="footer" style="border-top: 1px solid black;" class="bg-light">
+            <h5>データ出典</h5>
+            <p>地震危険度：
+                <a href="https://www.funenka.metro.tokyo.lg.jp/area-hazard-level/regional-risk-list/">地域危険度一覧表（東京都不燃化ポータルサイト）</a>
+            </p>
+            <p>犯罪件数に関する情報：
+                <a href="https://www.keishicho.metro.tokyo.lg.jp/about_mpd/jokyo_tokei/jokyo/hanzaihasseijyouhou.html">犯罪発生情報（年計）（警視庁）</a>
+            </p>
+            <p>洪水に関する情報：
+                <a href="https://disaportal.gsi.go.jp/index.html">ハザードマップポータルサイト</a></p>
+        </div>
+    </div>
 </div>
 </body>
 </html>

@@ -88,6 +88,13 @@ let tsunamiLayer;
 let marker;
 let floodLegend;
 
+//----------------
+// for map
+//----------------
+let chartPerMunicipality;
+
+
+
 async function loadSuggestData() {
     console.log("Loading municipality/district list from server...");
 
@@ -205,12 +212,6 @@ function hideSuggestList() {
 async function searchFloodData(description) {
     const municipality = document.getElementById("municipality").value;
 
-    if (!municipality) {
-        document.getElementById("result_flood").innerHTML =
-            `<div class="alert alert-warning">全ての値を正しく入力してください。</div>`;
-        return;
-    }
-
     const response = await fetch(
         `/api/search_flood?municipality=${encodeURIComponent(municipality)}`
     );
@@ -271,12 +272,6 @@ async function searchFloodData(description) {
 async function searchEarthquakeData(description) {
     const municipality = document.getElementById("municipality").value;
     const district = document.getElementById("district").value;
-
-    if (!municipality || !district) {
-        document.getElementById("result_earthquake").innerHTML =
-            `<div class="alert alert-warning">全ての値を正しく入力してください。</div>`;
-        return;
-    }
 
     const response = await fetch(
         `/api/search_earthquake?municipality=${encodeURIComponent(municipality)}&district=${encodeURIComponent(district)}`
@@ -398,7 +393,7 @@ async function searchCrimeData(description) {
     const data = await response.json();
     const data_per_municipality = await response_per_municipality.json();
 
-    if (!data || data.length === 0) {
+    if (!data || data.length === 0 || !data_per_municipality || data_per_municipality.length === 0) {
         document.getElementById("result_crime").innerHTML =
             `<h2>犯罪数（令和6年度）</h2><div class="alert alert-danger">データが見つかりませんでした。</div>`;
         return;
@@ -408,8 +403,8 @@ async function searchCrimeData(description) {
     const row = data[0];
     const row_per_municipality = data_per_municipality[0];
 
-    // 表HTMLを作成
-    document.getElementById("result_crime").innerHTML = `
+    // Make card lists
+    document.getElementById("result_crime_card").innerHTML = `
         <h2>犯罪件数（令和6年度）</h2>
         <div class="card mb-4">
             <div class="card-header bg-info text-white">
@@ -555,6 +550,45 @@ async function searchCrimeData(description) {
     </div>
     `;
 
+    // Make radar chart of $municipality vs average
+    if (chartPerMunicipality) {
+        chartPerMunicipality.destroy();
+    }
+    const ctx_mun = document.getElementById('result_crime_chart');
+
+    const chartDataMun = {
+        labels: [
+            CrimeTranslations.get("violent_crimes_total"),
+            CrimeTranslations.get("assault_total"),
+            CrimeTranslations.get("non_burglary_total"),
+            CrimeTranslations.get("burglary_total")
+        ],
+        datasets: [{
+            label: `${municipality}全体`,
+            data: [
+                row_per_municipality["violent_crimes_total"],
+                row_per_municipality["assault_total"],
+                row_per_municipality["non_burglary_total"],
+                row_per_municipality["burglary_total"],
+            ],
+            backgroundColor: [
+                'rgb(255, 0, 0)',
+                'rgb(255, 99, 132)',
+                'rgb(54, 162, 235)',
+                'rgb(255, 205, 86)',
+            ],
+            hoverOffset: 4,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        }]
+    };
+
+    chartPerMunicipality = new Chart( ctx_mun, {
+        type: 'pie',
+        data: chartDataMun
+    } );
 }
 
 async function showHeader() {
@@ -566,6 +600,21 @@ async function showHeader() {
     document.getElementById("result_title_detailed").innerHTML = `<h1>詳細情報</h1>`;
 }
 
+function isInputValid() {
+    const municipality = document.getElementById("municipality").value;
+    const district = document.getElementById("district").value;
+
+    // empty input or no district in given municipality
+    return !(municipality.length === 0
+        || district.length === 0
+        || !districtsMap.has(municipality)
+        || !districtsMap.get(municipality).includes(district)
+    );
+}
+
+// -----------
+// description
+// -----------
 async function fetchDescription() {
     const municipality = document.getElementById("municipality").value;
 
@@ -573,8 +622,7 @@ async function fetchDescription() {
         `/api/search_description?municipality=${encodeURIComponent(municipality)}`
     );
 
-    const data = await response.json();
-    return data;
+    return await response.json();
 }
 
 // ----------------------------
@@ -784,13 +832,16 @@ async function getGeocodeAddress(address) {
     };
 }
 
-
+// check input validity -> fetch data -> fetch map -> show header
 async function searchData() {
+
+    if (!isInputValid()) {
+        alert("入力が不正です。")
+        return;
+    }
 
     const description = await fetchDescription()
     const raw = description[0];
-
-    await showHeader();
 
     await Promise.all([
         searchEarthquakeData(raw),
@@ -805,4 +856,6 @@ async function searchData() {
             baseMap.invalidateSize();
         }, 0);
     }
+
+    await showHeader();
 }
