@@ -94,6 +94,10 @@ let floodLegend;
 let chartPerMunicipality;
 let chartPerDistrict;
 
+//----------------
+// for　loading modal
+//----------------
+let loadingModal = null;
 
 async function loadSuggestData() {
     console.log("Loading municipality/district list from server...");
@@ -582,7 +586,7 @@ async function searchCrimeData(description) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins : {
+                plugins: {
                     title: {
                         display: true,
                         text: `${municipality}全体`
@@ -617,7 +621,7 @@ async function searchCrimeData(description) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins : {
+                plugins: {
                     title: {
                         display: true,
                         text: `${municipality}${district}`
@@ -879,6 +883,44 @@ async function getGeocodeAddress(address) {
     };
 }
 
+
+// ---------------
+// loading modal
+// ---------------
+function enableLoadingHover() {
+    const modalEl = document.getElementById("loading-popup");
+
+    if (!modalEl) {
+        console.error("loading-popup not found");
+        return;
+    }
+
+    loadingModal = bootstrap.Modal.getOrCreateInstance(modalEl, {
+        backdrop: "static",
+        keyboard: false
+    });
+
+    loadingModal.show();
+}
+
+function disableLoadingHover() {
+    if (!loadingModal) return;
+
+    loadingModal.hide();
+}
+
+function setLoadingDescription(text) {
+    const descEl = document.getElementById("loading-description");
+
+    if (!descEl) {
+        console.error("loading-description not found");
+        return;
+    }
+
+    descEl.textContent = text;
+}
+
+
 // check input validity -> fetch data -> fetch map -> show header
 async function searchData() {
 
@@ -886,6 +928,10 @@ async function searchData() {
         alert("入力が不正です。")
         return;
     }
+
+    enableLoadingHover();
+
+    setLoadingDescription("危険性情報を取得中...");
 
     const description = await fetchDescription()
     const raw = description[0];
@@ -896,6 +942,8 @@ async function searchData() {
         searchFloodData(raw)
     ]);
 
+    setLoadingDescription("マップデータを取得中...");
+
     await fetchMap();
 
     if (baseMap) {
@@ -905,4 +953,6 @@ async function searchData() {
     }
 
     await showHeader();
+
+    disableLoadingHover();
 }
