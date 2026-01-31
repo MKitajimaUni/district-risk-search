@@ -11,6 +11,8 @@ window.addEventListener("DOMContentLoaded", () => {
         .addEventListener("click", searchHousingData);
 });
 
+
+
 // API endpoints and global values
 const NEAREST_STATION_URL = "https://express.heartrails.com/api/json?method=getStations"
 const CENTRAL_STATIONS_LIST = ["東京","渋谷","品川","上野","新宿","池袋"]
@@ -43,22 +45,27 @@ async function getCoordinate(municipality, district) {
 }
 
 async function showNearestStation(data) {
-
+    document.getElementById("station_list").innerHTML =
+    `
+    <>
+    `;
 }
 
 async function searchNearestStations(municipality, district) {
     const coordinate = await getCoordinate(municipality, district);
 
     const URL = `${NEAREST_STATION_URL}&x=${coordinate.lon}&y=${coordinate.lat}`;
-    console.log("api request: ", URL);
     const response = await fetch(URL, {})
 
     const data = await response.json();
+    const stations = data.response.station;
 
     if (!data || data.length === 0) {
         console.error("could not find any data");
     }
 
+    console.log("stations: ")
+    stations.forEach((station) => console.log(station));
     return data;
 }
 
