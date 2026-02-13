@@ -74,11 +74,12 @@
                 <select class="form-select" name="flood" id="flood-select">
                     <option value="" disabled>選択してください</option>
                     <option value="clear">マップレイヤを消去</option>
+                    <option value="" disabled><-- 洪水に関する情報 --></option>
                     <option value="river">洪水浸水想定区域（計画規模（現在の凡例））</option>
-                    <option value="pluvial">（福生市のみ）内水（雨水出水）浸水想定区域</option>
                     <option value="river-max">洪水浸水想定区域（想定最大規模）</option>
-                    <option value="tsunami">（島嶼部のみ）津波浸水想定</option>
+                    <option value="" disabled><-- 標高に関する情報 --></option>
                     <option value="height">（23区のみ）標高地形図</option>
+                    <option value="height-tokyo"> （東京都全域）標高地形図 </option>
                 </select>
                 <button type="button" class="btn btn-secondary" onclick="addMapLayer()">検索</button>
                 <p id="map-current-state" class="form-text text-muted"></p>

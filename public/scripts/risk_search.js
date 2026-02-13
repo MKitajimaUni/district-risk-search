@@ -86,11 +86,13 @@ let pluvialLayer;
 let riverMaxLayer;
 let tsunamiLayer;
 let heightLayer;
+let heightAllTokyoLayer;
 
 let marker;
 
 let floodLegend;
 let heightLegend;
+let heightTokyoLegend;
 
 //----------------
 // for chart
@@ -745,7 +747,8 @@ function clearUpperLayers() {
     pluvialLayer && baseMap.removeLayer(pluvialLayer);
     riverMaxLayer && baseMap.removeLayer(riverMaxLayer);
     tsunamiLayer && baseMap.removeLayer(tsunamiLayer);
-    heightLayer && baseMap.removeLayer(heightLayer)
+    heightLayer && baseMap.removeLayer(heightLayer);
+    heightAllTokyoLayer && baseMap.removeLayer(heightAllTokyoLayer);
 
     if (floodLegend) {
         baseMap.removeControl(floodLegend);
@@ -755,6 +758,11 @@ function clearUpperLayers() {
     if (heightLegend) {
         baseMap.removeControl(heightLegend);
         heightLegend = null;
+    }
+
+    if (heightTokyoLegend) {
+        baseMap.removeControl(heightTokyoLegend);
+        heightTokyoLegend = null;
     }
 }
 
@@ -870,6 +878,29 @@ async function fetchMapWithHeight() {
     }
 }
 
+async function fetchMapWithAllTokyoHeight() {
+    clearUpperLayers();
+
+    try {
+        if (!heightAllTokyoLayer) {
+            heightAllTokyoLayer = L.tileLayer(
+                "https://cyberjapandata.gsi.go.jp/xyz/d1-no955/{z}/{x}/{y}.png",
+                {
+                    opacity: 0.6,
+                    attribution: '出典: <a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a>'
+                }
+            );
+        }
+        heightAllTokyoLayer.addTo(baseMap);
+
+    } catch (error) {
+        console.log(error);
+        alert("標高情報取得に失敗しました");
+    }
+
+    addHeightTokyoLegend();
+}
+
 function addFloodLegend() {
     if (floodLegend) return;
 
@@ -905,6 +936,24 @@ function addHeightLegend() {
     heightLegend.addTo(baseMap);
 }
 
+function addHeightTokyoLegend() {
+    if (heightTokyoLegend) return;
+
+    heightTokyoLegend = L.control({position: "bottomright"});
+
+    heightTokyoLegend.onAdd = function () {
+        const div = L.DomUtil.create("div", "height");
+        div.innerHTML = `
+        <img src="/img/height_tokyo_legend.png"
+            style="width:120px; padding:5px; border-radius:4px;">
+        `;
+
+        return div;
+    }
+
+    heightTokyoLegend.addTo(baseMap);
+}
+
 function addMapLayer() {
     let type = document.getElementById("flood-select").value;
 
@@ -932,6 +981,11 @@ function addMapLayer() {
         case "height": {
             fetchMapWithHeight();
             document.getElementById("map-current-state").innerText = `表示中：（23区のみ）標高地形図`;
+            break;
+        }
+        case "height-tokyo": {
+            fetchMapWithAllTokyoHeight();
+            document.getElementById("map-current-state").innerHTML = `表示中：（東京都全域）標高地形図`;
             break;
         }
         case "clear": {
