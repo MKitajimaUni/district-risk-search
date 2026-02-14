@@ -315,10 +315,10 @@ async function searchEarthquakeData(description) {
             <small>AIによって生成された情報であり、間違いを含む可能性があります。</small>
             </div>
         </div>
-        <div class="row text-center gap-3">
+        <div class="row text-center">
             <!-- 総合危険度 -->          
             <div class="col-md-4">
-                <div class="card text-bg-primary border-mb-3 border-${ElementColor.get(row["total_risk_index"])}">
+                <div class="card text-bg-light border-mb-3 border-${ElementColor.get(row["total_risk_index"])}">
                     <div class="card-header">総合危険度</div>
                     <div class="card-body">
                         <h2 class="card-title text-center text-${ElementColor.get(row["total_risk_index"])}">
@@ -335,7 +335,7 @@ async function searchEarthquakeData(description) {
             </div>
             <!-- 火災危険度 -->
             <div class="col-md-4">
-                <div class="card text-bg-primary mb-3 border-${ElementColor.get(row["fire_risk_index"])}">
+                <div class="card text-bg-light mb-3 border-${ElementColor.get(row["fire_risk_index"])}">
                     <div class="card-header">火災危険度</div>
                     <div class="card-body">
                         <h2 class="card-title text-center text-${ElementColor.get(row["fire_risk_index"])}">
@@ -352,7 +352,7 @@ async function searchEarthquakeData(description) {
             </div>
             <!-- 建物倒壊危険度 -->
             <div class="col-md-4">
-                <div class="card text-bg-primary mb-3 border-${ElementColor.get(row["building_collapse_risk_index"])}">
+                <div class="card text-bg-light mb-3 border-${ElementColor.get(row["building_collapse_risk_index"])}">
                     <div class="card-header">建物倒壊危険度</div>
                     <div class="card-body">
                         <h2 class="card-title text-center text-${ElementColor.get(row["building_collapse_risk_index"])}">
@@ -432,9 +432,9 @@ async function searchCrimeData(description) {
         </div>
         <h5>${municipality}${district}</h5>
         
-        <div class="row text-center gap-3">
+        <div class="row text-center">
             <div class="col-md-4">
-                <div class="card text-bg-primary border-mb-3">
+                <div class="card text-bg-light border-mb-3">
                     <div class="card-header">凶悪犯</div>
                     <div class="card-body">
                         <h2 class="card-title text-center">
@@ -448,7 +448,7 @@ async function searchCrimeData(description) {
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card text-bg-primary border-mb-3">
+                <div class="card text-bg-light border-mb-3">
                     <div class="card-header">粗暴犯</div>
                     <div class="card-body">
                         <h2 class="card-title text-center">
@@ -463,7 +463,7 @@ async function searchCrimeData(description) {
                 </div>
             </div>           
             <div class="col-md-4">
-                <div class="card text-bg-primary mb-3">
+                <div class="card text-bg-light mb-3">
                     <div class="card-header">侵入窃盗</div>
                     <div class="card-body">
                         <h2 class="card-title text-center">
@@ -477,7 +477,7 @@ async function searchCrimeData(description) {
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card text-bg-primary mb-3">
+                <div class="card text-bg-light mb-3">
                     <div class="card-header">非侵入窃盗</div>
                     <div class="card-body">
                         <h2 class="card-title text-center text-">
@@ -494,7 +494,7 @@ async function searchCrimeData(description) {
         <h5>${municipality}全体</h5>
         <div class="row text-center">
             <div class="col-md-4">
-                <div class="card text-bg-primary border-mb-3">
+                <div class="card text-bg-light border-mb-3">
                     <div class="card-header">凶悪犯</div>
                     <div class="card-body">
                         <h2 class="card-title text-center">
@@ -508,7 +508,7 @@ async function searchCrimeData(description) {
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card text-bg-primary border-mb-3">
+                <div class="card text-bg-light border-mb-3">
                     <div class="card-header">粗暴犯</div>
                     <div class="card-body">
                         <h2 class="card-title text-center}">
@@ -523,7 +523,7 @@ async function searchCrimeData(description) {
                 </div>
             </div>           
             <div class="col-md-4">
-                <div class="card text-bg-primary mb-3">
+                <div class="card text-bg-light mb-3">
                     <div class="card-header">侵入窃盗</div>
                     <div class="card-body">
                         <h2 class="card-title text-center">
@@ -537,7 +537,7 @@ async function searchCrimeData(description) {
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card text-bg-primary mb-3">
+                <div class="card text-bg-light mb-3">
                     <div class="card-header">非侵入窃盗</div>
                     <div class="card-body">
                         <h2 class="card-title text-center text-">
