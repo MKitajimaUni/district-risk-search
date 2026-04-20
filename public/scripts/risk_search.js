@@ -1,3 +1,5 @@
+import {showEvacuationInfoByMunicipality, showEvacuationInfoByCoordinate} from "./evacuation_site_and_shelter.js"; 
+
 const TABLE = "earthquake_risk_full";
 const AREA_COUNT = 5192;
 const Translations = new Map([
@@ -75,12 +77,21 @@ let districtsMap = new Map();
 // Load when content is loaded
 // ----------------------------
 window.addEventListener("DOMContentLoaded", loadSuggestData);
+window.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("btn").addEventListener("click", () => {
+    searchData();
+    });
+
+    document.getElementById("btn-map-search").addEventListener("click", () => {
+        addMapLayer();
+    });
+
+});
 
 // ----------------------------
 // For map
 // ----------------------------
 let baseMap;
-
 let riverLayer;
 let pluvialLayer;
 let riverMaxLayer;
@@ -401,9 +412,17 @@ async function searchCrimeData(description) {
     const response_per_municipality = await fetch(
         `/api/search_crime_per_municipality?municipality=${encodeURIComponent(municipality)}`
     );
+    const response_rank_municipality = await fetch(
+        `/api/total_crime_per_municipality?municipality=${encodeURIComponent(municipality)}`
+    );
+    const response_rank_tokyo = await fetch(
+      `/api/total_crime_tokyo`
+    );
 
     const data = await response.json();
     const data_per_municipality = await response_per_municipality.json();
+    const data_rank_municipality = await response_rank_municipality.json();
+    const data_rank_tokyo = await response_rank_tokyo.json();
 
     if (!data || data.length === 0 || !data_per_municipality || data_per_municipality.length === 0) {
         document.getElementById("result_crime").innerHTML =
@@ -414,6 +433,10 @@ async function searchCrimeData(description) {
     // Assumption: only one record
     const row = data[0];
     const row_per_municipality = data_per_municipality[0];
+    const row_rank_municipality = data_rank_municipality;
+    const row_rank_tokyo = data_rank_tokyo;
+    console.log(row_rank_municipality);
+    console.log(row_rank_tokyo);
 
     // Make card lists
     document.getElementById("result_crime_card").innerHTML = `
@@ -432,6 +455,21 @@ async function searchCrimeData(description) {
         <h5>${municipality}${district}</h5>
         
         <div class="row text-center">
+            <div class="col-sm-4">
+                <div class="card text-bg-light mb-3">
+                    <div class="card-header">全体</div>
+                    <div class="card-body">
+                        <h2 class="card-title text-center">
+                            ${row["total_crimes"]}
+                        </h2>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                # ${row_rank_municipality.findIndex(x => x.district === district) + 1} / ${row_rank_municipality.length}
+                            </small>
+                        </p>
+                    </div>
+                </div>
+            </div>
             <div class="col-sm-4">
                 <div class="card text-bg-light mb-3">
                     <div class="card-header">凶悪犯</div>
@@ -492,6 +530,21 @@ async function searchCrimeData(description) {
 　　　　　</div>
         <h5>${municipality}全体</h5>
         <div class="row text-center">
+             <div class="col-sm-4">
+                <div class="card text-bg-light mb-3">
+                    <div class="card-header">全体</div>
+                    <div class="card-body">
+                        <h2 class="card-title text-center">
+                            ${row_per_municipality["total_crimes"]}
+                        </h2>
+                         <p class="card-text">
+                            <small class="text-muted">
+                                # ${row_rank_tokyo.findIndex(x => x.municipality === municipality) + 1} / ${row_rank_tokyo.length}
+                            </small>
+                        </p>
+                    </div>
+                </div>
+            </div>
             <div class="col-sm-4">
                 <div class="card text-bg-light mb-3">
                     <div class="card-header">凶悪犯</div>
@@ -1061,6 +1114,8 @@ function setLoadingDescription(text) {
 
 // check input validity -> fetch data -> fetch map -> show header
 async function searchData() {
+    const municipality = document.getElementById("municipality").value;
+
 
     if (!isInputValid()) {
         alert("入力が不正です。")
@@ -1077,7 +1132,8 @@ async function searchData() {
     await Promise.all([
         searchEarthquakeData(raw),
         searchCrimeData(raw),
-        searchFloodData(raw)
+        searchFloodData(raw),
+        showEvacuationInfoByMunicipality(municipality)
     ]);
 
     setLoadingDescription("マップデータを取得中...");

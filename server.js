@@ -22,13 +22,9 @@ const __dirname = path.dirname(__filename);
 
 // Table Names
 const TABLE_EARTHQUAKE = "earthquake_risk_full";
-const TABLE_EARTHQUAKE_DESCRIPTION = "";
 const TABLE_CRIME = "crime_data"
-const TABLE_CRIME_DESCRIPTION = "";
-const TABLE_FLOOD_RIVER = "river_flood_map";
-const TABLE_FLOOD_PLUVIAL = "pluvial_flood_map";
-const TABLE_FLOOD_DESCRIPTION = "";
-
+const TABLE_EVACUATION_SITE = "evacuation_site";
+const TABLE_EVACUATION_SHELTER = "evacuation_shelter";
 
 // Make authenticated client (only reading data is enabled)
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
@@ -62,23 +58,11 @@ app.get("/api/search_earthquake", async (req, res) => {
 app.get("/api/search_crime", async (req, res) => {
     const {municipality, district} = req.query;
 
-    // Because of a specific database value problem.
-    // This should be fixed in the database later.
-    let municipality_fixed;
-    let district_fixed;
-    if (municipality === "町田市") {
-        municipality_fixed = "町";
-        district_fixed = "田市" + district;
-    } else {
-        municipality_fixed = municipality;
-        district_fixed = district;
-    }
-
     const {data, error} = await supabase
         .from(TABLE_CRIME)
         .select('*')
-        .eq('municipality', municipality_fixed)
-        .eq('district', district_fixed); // filter implies "AND" for previous clauses
+        .eq('municipality', municipality)
+        .eq('district', district); // filter implies "AND" for previous clauses
 
     if (error) return res.status(400).send({"error": error});
 
@@ -88,29 +72,50 @@ app.get("/api/search_crime", async (req, res) => {
 app.get("/api/search_crime_per_municipality", async (req, res) => {
     const {municipality} = req.query;
 
-    // Because of a specific database value problem.
-    // This should be fixed in the database later.
-    let municipality_fixed;
-    let district;
-    if (municipality === "町田市") {
-        municipality_fixed = "町";
-        district = '田市計';
-    } else {
-        municipality_fixed = municipality;
-        district = '計'
-    }
-
     const {data, error} = await supabase
         .from(TABLE_CRIME)
         .select('*')
-        .eq('municipality', municipality_fixed)
-        .eq('district', district); // Means "sum". Follow the table format.
+        .eq('municipality', municipality)
+        .eq('district', `計`); // Means "sum". Follow the table format.
 
     if (error) return res.status(400).send({"error": error});
 
     res.json(data);
 
 });
+
+app.get("/api/total_crime_per_municipality", async (req, res) => {
+    const {municipality} = req.query;
+    if (!municipality) {
+        return res.status(400).json({
+            error: 'municipality parameter is required'
+        });
+    }
+
+    const {data: data_municipality, error: error_municipality} = await supabase
+        .from(TABLE_CRIME)
+        .select('municipality, district, total_crimes')
+        .eq('municipality', municipality)
+        .neq('district', '計')
+        .order('total_crimes', {ascending: false});
+
+    if (error_municipality) return res.status(400).send({"error": error_municipality});
+
+    res.json(data_municipality);
+});
+
+app.get('/api/total_crime_tokyo', async (req, res) => {
+
+    const {data: data_prefecture, error: error_prefecture} = await supabase
+        .from(TABLE_CRIME)
+        .select('municipality, district, total_crimes')
+        .like('district', '計')
+        .order('total_crimes', {ascending: false});
+
+    if (error_prefecture) return res.status(400).send({"error": error_prefecture});
+
+    res.json(data_prefecture);
+})
 
 app.get('/api/search_flood', async (req, res) => {
     try {
@@ -166,7 +171,53 @@ app.get("/api/search_description", async (req, res) => {
         console.error('Server error:', error)
         res.status(500).json({error: 'Internal server error'})
     }
-})
+});
+
+app.get("/api/search_evacuation_info_municipality", async (req, res) => {
+    const {municipality} = req.query;
+
+    if (!municipality) {
+        return res.status(400).json({
+            error: 'municipality parameter is required'
+        });
+    }
+
+    const {data: siteData, error: siteError} = await supabase
+        .from(TABLE_EVACUATION_SITE)
+        .select('*')
+        .like('address', `%${municipality}%`);
+
+    if (siteError) return res.status(400).send({"error": siteError});
+
+    // Assuming that we alrady fetched evacuation sites
+    // which is also an evacuation shelter
+    const {data: shelterData, error: shelterError} = await supabase
+        .from(TABLE_EVACUATION_SHELTER)
+        .select('*')
+        .eq('is_also_evacuation_site', 'false')
+        .like('address', `%${municipality}%`);
+        
+    if (shelterError) return res.status(400).send({"error": shelterError});
+
+    res.json({
+        sites: siteData,
+        shelters: shelterData
+    });
+});
+
+app.get("/api/search_evacuation_info_coordinate", async (req, res) => {
+    const {lat, lon, rad} = req.query;
+
+        if (!lat || !lon || !rad) {
+            return res.status(400).json({
+                error: 'lat, lon, and rad parameters are required'
+            });
+        }
+});
+
+//----------------------------
+// helper functions
+// ---------------------------
 
 
 //----------------------------
@@ -175,7 +226,7 @@ app.get("/api/search_description", async (req, res) => {
 
 // deriver dependent files
 app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "index.html", "housing.html"));
+    res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // start server
