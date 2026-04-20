@@ -225,8 +225,10 @@ app.get("/api/search_evacuation_info_coordinate", async (req, res) => {
 //----------------------------
 
 // deriver dependent files
+app.use('/scripts', express.static('scripts'));
+
 app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "index.html"));
+    res.sendFile("index.html");
 });
 
 // start server
