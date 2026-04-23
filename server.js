@@ -189,12 +189,9 @@ app.get("/api/search_evacuation_info_municipality", async (req, res) => {
 
     if (siteError) return res.status(400).send({"error": siteError});
 
-    // Assuming that we alrady fetched evacuation sites
-    // which is also an evacuation shelter
     const {data: shelterData, error: shelterError} = await supabase
         .from(TABLE_EVACUATION_SHELTER)
         .select('*')
-        .eq('is_also_evacuation_site', 'false')
         .like('address', `%${municipality}%`);
         
     if (shelterError) return res.status(400).send({"error": shelterError});

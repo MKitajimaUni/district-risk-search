@@ -1,4 +1,8 @@
-import {showEvacuationInfoByMunicipality, showEvacuationInfoByCoordinate} from "./evacuation_site_and_shelter.js"; 
+import {
+    fetchEvacuationInfoByMunicipality,
+    showEvacuationInfoByMunicipality,
+    showEvacuationInfoByCoordinate
+} from "./evacuation_site_and_shelter.js";
 
 const TABLE = "earthquake_risk_full";
 const AREA_COUNT = 5192;
@@ -79,7 +83,10 @@ let districtsMap = new Map();
 window.addEventListener("DOMContentLoaded", loadSuggestData);
 window.addEventListener("DOMContentLoaded", () => {
     document.getElementById("btn").addEventListener("click", () => {
-    searchData();
+        // Trigger clearing additional map layer(s)
+        document.getElementById("flood-select").value = "clear";
+        addMapLayer();
+        searchData();
     });
 
     document.getElementById("btn-map-search").addEventListener("click", () => {
@@ -98,6 +105,8 @@ let riverMaxLayer;
 let tsunamiLayer;
 let heightLayer;
 let heightAllTokyoLayer;
+let evacuationSiteLayer;
+let evacuationShelterLayer;
 
 let marker;
 
@@ -416,7 +425,7 @@ async function searchCrimeData(description) {
         `/api/total_crime_per_municipality?municipality=${encodeURIComponent(municipality)}`
     );
     const response_rank_tokyo = await fetch(
-      `/api/total_crime_tokyo`
+        `/api/total_crime_tokyo`
     );
 
     const data = await response.json();
@@ -435,8 +444,6 @@ async function searchCrimeData(description) {
     const row_per_municipality = data_per_municipality[0];
     const row_rank_municipality = data_rank_municipality;
     const row_rank_tokyo = data_rank_tokyo;
-    console.log(row_rank_municipality);
-    console.log(row_rank_tokyo);
 
     // Make card lists
     document.getElementById("result_crime_card").innerHTML = `
@@ -801,6 +808,12 @@ function clearUpperLayers() {
     tsunamiLayer && baseMap.removeLayer(tsunamiLayer);
     heightLayer && baseMap.removeLayer(heightLayer);
     heightAllTokyoLayer && baseMap.removeLayer(heightAllTokyoLayer);
+    if (evacuationSiteLayer) {
+        evacuationSiteLayer.clearLayers();
+    }
+    if (evacuationShelterLayer) {
+        evacuationShelterLayer.clearLayers();
+    }
 
     if (floodLegend) {
         baseMap.removeControl(floodLegend);
@@ -835,7 +848,8 @@ async function fetchMapWithRiverFlood() {
         addFloodLegend();
 
     } catch (error) {
-        console.log(error);
+        Layer;
+        (error);
         alert("洪水情報取得に失敗しました");
     }
 }
@@ -953,6 +967,122 @@ async function fetchMapWithAllTokyoHeight() {
     addHeightTokyoLegend();
 }
 
+function createSiteMarker(site) {
+    return L.marker([site.latitude, site.longitude], {
+        icon: L.icon({
+            iconUrl: '/icon/evac.png',
+            iconSize: [30, 30]
+        })
+    }).bindPopup(`
+        <strong>指定緊急避難場所</strong><br>
+        ${site.shelter_name || ""}<br>
+        ${site.address || ""}
+        <hr>
+        対応している災害：${site.debris_flow_and_landslide ? "崖崩れ、土石流及び地滑り" : ""}
+        ${site.flood ? " 洪水 " : ""}  
+        ${site.pluvial_flood ? " 内水氾濫 " : ""}  
+        ${site.earthquake ? " 地震 " : ""}
+        ${site.extreme_fire ? " 大規模な火事 " : ""}
+        ${site.storm_tide ? " 高潮 " : ""}
+        ${site.tsunami ? " 津波" : ""}
+        ${site.volcanic_eruption ? " 火山現象" : ""}<br>
+        備考：${site.remarks === null ? "なし" : site.remarks}
+    `);
+}
+
+function createAggregateMarker(site, shelter) {
+    return L.marker([site.latitude, site.longitude], {
+        icon: L.icon({
+            iconUrl: '/icon/evac.png',
+            iconSize: [30, 30]
+        })
+    }).bindPopup(`
+        <strong>指定避難場所　兼　指定緊急避難場所</strong><br>
+        ${site.shelter_name || ""}<br>
+        ${site.address || ""}
+        <hr>
+        <strong>指定避難場所</strong><br>
+        受け入れ条件：${shelter.acceptable_residents === null ? "指定なし" : shelter.acceptable_residents}<br>
+        その他市町村長が必要と認める事項：${shelter.special_conditions === null ? "なし" : shelter.special_conditions}<br>
+        備考：${shelter.remarks === null ? "なし" : shelter.remarks}
+        <hr>
+        <strong>指定緊急避難場所</strong><br>
+        対応している災害：${site.debris_flow_and_landslide ? "崖崩れ、土石流及び地滑り" : ""}
+        ${site.flood ? " 洪水 " : ""}  
+        ${site.pluvial_flood ? " 内水氾濫 " : ""}  
+        ${site.earthquake ? " 地震 " : ""}
+        ${site.extreme_fire ? " 大規模な火事 " : ""}
+        ${site.storm_tide ? " 高潮 " : ""}
+        ${site.tsunami ? " 津波" : ""}
+        ${site.volcanic_eruption ? " 火山現象" : ""}<br>
+        備考：${site.remarks === null ? "なし" : site.remarks}
+    `);
+}
+
+function createShelterMarker(shelter) {
+    return L.marker([shelter.latitude, shelter.longitude], {
+        icon: L.icon({
+            iconUrl: '/icon/evac.png',
+            iconSize: [30, 30]
+        })
+    }).bindPopup(`
+        <strong>指定避難場所</strong><br>
+        ${shelter.shelter_name || ""}<br>
+        ${shelter.address || ""}
+        <hr>
+        受け入れ条件：${shelter.acceptable_residents === null ? "指定なし" : shelter.acceptable_residents}<br>
+        その他市町村長が必要と認める事項：${shelter.special_conditions === null ? "なし" : shelter.special_conditions}<br>
+        備考：${shelter.remarks === null ? "なし" : shelter.remarks}
+    `);
+}
+
+async function fetchMapWithEvacuationInfo() {
+    clearUpperLayers();
+
+    const municipality = document.getElementById("municipality").value;
+    try {
+        const data = await fetchEvacuationInfoByMunicipality(municipality);
+        console.log("evacuation info fetched: ", municipality);
+        console.log(`data: `, data)
+
+        // --- Sites ---
+        if (!evacuationSiteLayer) {
+            evacuationSiteLayer = L.layerGroup();
+        }
+
+        // all evacuation sites and both shelter and site
+        data.sites.forEach(site => {
+            let marker;
+
+            if (site.latitude && site.longitude) {
+                site.is_also_evacuation_shelter ? marker = createAggregateMarker(site, data.shelters.find(shelter => (shelter.address === site.address))) : marker = createSiteMarker(site);
+                evacuationSiteLayer.addLayer(marker);
+            }
+        });
+
+        evacuationSiteLayer.addTo(baseMap);
+
+        // --- Shelters ---
+        if (!evacuationShelterLayer) {
+            evacuationShelterLayer = L.layerGroup();
+        }
+
+        // filter aggregated site
+        data.shelters.forEach(shelter => {
+            if (!shelter.is_also_evacuation_site && shelter.latitude && shelter.longitude) {
+                const marker = createShelterMarker(shelter);
+                evacuationShelterLayer.addLayer(marker);
+            }
+        });
+
+        evacuationShelterLayer.addTo(baseMap);
+
+    } catch (error) {
+        console.log(error);
+        alert("避難情報の取得に失敗しました");
+    }
+}
+
 function addFloodLegend() {
     if (floodLegend) return;
 
@@ -1037,7 +1167,14 @@ function addMapLayer() {
         }
         case "height-tokyo": {
             fetchMapWithAllTokyoHeight();
-            document.getElementById("map-current-state").innerHTML = `表示中：（東京都全域）標高地形図`;
+            document.getElementById("map-current-state").innerText = `表示中：（東京都全域）標高地形図`;
+            break;
+        }
+        case "evacuation" : {
+            fetchMapWithEvacuationInfo();
+            document.getElementById("map-current-state").innerHTML = `表示中：（検索中の市区町村のみ）避難所に関する情報<br>
+            データ出典：<a href="https://www.gsi.go.jp/bousaichiri/hinanbasho.html">指定緊急避難場所・指定避難所データ（国土地理院）</a><br>
+            <a href="https://www.bousai.go.jp/taisaku/pdf/hinanjo_02.pdf">指定避難場所と指定緊急避難場所の違い</a>（出典：内閣府防災情報）`;
             break;
         }
         case "clear": {

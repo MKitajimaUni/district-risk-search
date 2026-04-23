@@ -1,4 +1,4 @@
-async function fetchEvacuationInfoByMunicipality(municipality) {
+export async function fetchEvacuationInfoByMunicipality(municipality) {
     const response = await fetch(`/api/search_evacuation_info_municipality?municipality=${encodeURIComponent(municipality)}`);
     
     if (!response.ok) {
@@ -24,15 +24,15 @@ export async function showEvacuationInfoByMunicipality(municipality) {
     // for debugging
     const data = await fetchEvacuationInfoByMunicipality(municipality);
     
-    console.log("Evacuation info for municipality:", municipality);
-    console.log(data);
+    //console.log("Evacuation info for municipality:", municipality);
+    //console.log(data);
 }
 
 export async function showEvacuationInfoByCoordinate(lat, lon, rad) {
     // for debugging
     const data = await fetchEvacuationInfoByCoordinate(lat, lon, rad);
     
-    console.log("Evacuation info for coordinates:", lat, lon, rad);
-    console.log(data);
+    //console.log("Evacuation info for coordinates:", lat, lon, rad);
+    //console.log(data);
 }
 

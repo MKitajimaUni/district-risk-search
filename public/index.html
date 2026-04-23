@@ -77,6 +77,8 @@
                         <label for="flood-select">知りたい情報を選択してください:</label>
                         <select class="form-select" name="flood" id="flood-select">
                             <option value="clear">マップレイヤを消去</option>
+                            <option value="" disabled><-- 避難所に関する情報 --></option>
+                            <option value="evacuation">（検索中の市区町村のみ）避難所に関する情報</option>
                             <option value="" disabled><-- 洪水に関する情報 --></option>
                             <option value="river">洪水浸水想定区域（計画規模（現在の凡例））</option>
                             <option value="river-max">洪水浸水想定区域（想定最大規模）</option>
@@ -93,6 +95,16 @@
                 </div>
             </div>
             <div id="map_flood" style="height: 400px;" class="mb-5"></div>
+            <div class="alert alert-warning" role="alert">
+                <h4 class="alert-heading">避難所に関する情報について</h4>
+                <p>避難所に関するデータは、災害対策基本法第49条の4・第49条の7に基づき市町村長が指定した指定緊急避難場所・指定避難所の情報を各市町村が登録したものです。
+                    <br>最新でない場合や未掲載の場合があるため、正確な情報は<strong>必ず当該市町村の公式情報をご確認ください。</strong>
+                    <br>例：指定緊急避難場所として登録されているが指定避難場所も兼ねている、市区町村独自の形態がある等
+                    </p>
+                <hr>
+                <p class="mb-0">出典：<a href="https://www.gsi.go.jp/bousaichiri/hinanbasho.html">指定緊急避難場所・指定避難所データ（国土地理院）</a></p>
+
+            </div>
         </div>
 
         <div id="result_earthquake" class="mb-5"></div>
@@ -130,6 +142,9 @@
             </p>
             <p>標高地形図：
                 <a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a>
+            </p>
+            <p>避難所：
+                <a href="https://www.gsi.go.jp/bousaichiri/hinanbasho.html">指定緊急避難場所・指定避難所データ（国土地理院）</a>
             </p>
         </div>
     </div>
