@@ -969,70 +969,102 @@ async function fetchMapWithAllTokyoHeight() {
 
 function createSiteMarker(site) {
     return L.marker([site.latitude, site.longitude], {
-        icon: L.icon({
-            iconUrl: '/icon/evac.png',
-            iconSize: [30, 30]
-        })
+        icon: L.icon({ iconUrl: '/icon/evac.png', iconSize: [30, 30] })
     }).bindPopup(`
         <strong>指定緊急避難場所</strong><br>
         ${site.shelter_name || ""}<br>
         ${site.address || ""}
         <hr>
         対応している災害：${site.debris_flow_and_landslide ? "崖崩れ、土石流及び地滑り" : ""}
-        ${site.flood ? " 洪水 " : ""}  
-        ${site.pluvial_flood ? " 内水氾濫 " : ""}  
+        ${site.flood ? " 洪水 " : ""}
+        ${site.pluvial_flood ? " 内水氾濫 " : ""}
         ${site.earthquake ? " 地震 " : ""}
         ${site.extreme_fire ? " 大規模な火事 " : ""}
         ${site.storm_tide ? " 高潮 " : ""}
         ${site.tsunami ? " 津波" : ""}
         ${site.volcanic_eruption ? " 火山現象" : ""}<br>
-        備考：${site.remarks === null ? "なし" : site.remarks}
+        備考：${site.remarks ?? "なし"}
     `);
 }
 
-function createAggregateMarker(site, shelter) {
+function createShelterMarker(shelter) {
+    return L.marker([shelter.latitude, shelter.longitude], {
+        icon: L.icon({ iconUrl: '/icon/evac.png', iconSize: [30, 30] })
+    }).bindPopup(`
+        <strong>指定避難場所</strong><br>
+        ${shelter.shelter_name || ""}<br>
+        ${shelter.address || ""}
+        <hr>
+        受け入れ条件：${shelter.acceptable_residents ?? "指定なし"}<br>
+        その他市町村長が必要と認める事項：${shelter.special_conditions ?? "なし"}<br>
+        備考：${shelter.remarks ?? "なし"}
+    `);
+}
+
+// FIX: separate aggregate builders for each anchor type,
+// so coords/name/address always come from the record that actually exists.
+
+function createAggregateMarkerFromSite(site, shelter) {
+    // Anchor: site exists. shelter may or may not exist.
+    const shelterSection = shelter
+        ? `受け入れ条件：${shelter.acceptable_residents ?? "指定なし"}<br>
+        その他市町村長が必要と認める事項：${shelter.special_conditions ?? "なし"}<br>
+        備考：${shelter.remarks ?? "なし"}`
+        : `情報なし`;   // FIX: was crashing / showing wrong data when shelter was undefined
+
     return L.marker([site.latitude, site.longitude], {
-        icon: L.icon({
-            iconUrl: '/icon/evac.png',
-            iconSize: [30, 30]
-        })
+        icon: L.icon({ iconUrl: '/icon/evac.png', iconSize: [30, 30] })
     }).bindPopup(`
         <strong>指定避難場所　兼　指定緊急避難場所</strong><br>
         ${site.shelter_name || ""}<br>
         ${site.address || ""}
         <hr>
         <strong>指定避難場所</strong><br>
-        受け入れ条件：${shelter.acceptable_residents === null ? "指定なし" : shelter.acceptable_residents}<br>
-        その他市町村長が必要と認める事項：${shelter.special_conditions === null ? "なし" : shelter.special_conditions}<br>
-        備考：${shelter.remarks === null ? "なし" : shelter.remarks}
+        ${shelterSection}
         <hr>
         <strong>指定緊急避難場所</strong><br>
         対応している災害：${site.debris_flow_and_landslide ? "崖崩れ、土石流及び地滑り" : ""}
-        ${site.flood ? " 洪水 " : ""}  
-        ${site.pluvial_flood ? " 内水氾濫 " : ""}  
+        ${site.flood ? " 洪水 " : ""}
+        ${site.pluvial_flood ? " 内水氾濫 " : ""}
         ${site.earthquake ? " 地震 " : ""}
         ${site.extreme_fire ? " 大規模な火事 " : ""}
         ${site.storm_tide ? " 高潮 " : ""}
         ${site.tsunami ? " 津波" : ""}
         ${site.volcanic_eruption ? " 火山現象" : ""}<br>
-        備考：${site.remarks === null ? "なし" : site.remarks}
+        備考：${site.remarks ?? "なし"}
     `);
 }
 
-function createShelterMarker(shelter) {
+function createAggregateMarkerFromShelter(shelter, site) {
+    // FIX: entirely new function — previously the shelter loop passed (shelter, site)
+    // into createAggregateMarker(site, shelter), silently swapping all fields.
+    // Anchor: shelter exists. site may or may not exist.
+    const siteSection = site
+        ? `対応している災害：${site.debris_flow_and_landslide ? "崖崩れ、土石流及び地滑り" : ""}
+        ${site.flood ? " 洪水 " : ""}
+        ${site.pluvial_flood ? " 内水氾濫 " : ""}
+        ${site.earthquake ? " 地震 " : ""}
+        ${site.extreme_fire ? " 大規模な火事 " : ""}
+        ${site.storm_tide ? " 高潮 " : ""}
+        ${site.tsunami ? " 津波" : ""}
+        ${site.volcanic_eruption ? " 火山現象" : ""}<br>
+        備考：${site.remarks ?? "なし"}`
+        : `情報なし`;   // FIX: was crashing when site was undefined
+
     return L.marker([shelter.latitude, shelter.longitude], {
-        icon: L.icon({
-            iconUrl: '/icon/evac.png',
-            iconSize: [30, 30]
-        })
+        icon: L.icon({ iconUrl: '/icon/evac.png', iconSize: [30, 30] })
     }).bindPopup(`
-        <strong>指定避難場所</strong><br>
+        <strong>指定避難場所　兼　指定緊急避難場所</strong><br>
         ${shelter.shelter_name || ""}<br>
         ${shelter.address || ""}
         <hr>
-        受け入れ条件：${shelter.acceptable_residents === null ? "指定なし" : shelter.acceptable_residents}<br>
-        その他市町村長が必要と認める事項：${shelter.special_conditions === null ? "なし" : shelter.special_conditions}<br>
-        備考：${shelter.remarks === null ? "なし" : shelter.remarks}
+        <strong>指定避難場所</strong><br>
+        受け入れ条件：${shelter.acceptable_residents ?? "指定なし"}<br>
+        その他市町村長が必要と認める事項：${shelter.special_conditions ?? "なし"}<br>
+        備考：${shelter.remarks ?? "なし"}
+        <hr>
+        <strong>指定緊急避難場所</strong><br>
+        ${siteSection}
     `);
 }
 
@@ -1043,42 +1075,52 @@ async function fetchMapWithEvacuationInfo() {
     try {
         const data = await fetchEvacuationInfoByMunicipality(municipality);
         console.log("evacuation info fetched: ", municipality);
-        console.log(`data: `, data)
+        console.log(`data: `, data);
 
-        // --- Sites ---
-        if (!evacuationSiteLayer) {
-            evacuationSiteLayer = L.layerGroup();
-        }
+        if (!evacuationSiteLayer) evacuationSiteLayer = L.layerGroup();
 
-        // all evacuation sites and both shelter and site
         data.sites.forEach(site => {
-            let marker;
+            if (!site.latitude || !site.longitude) return;
 
-            if (site.latitude && site.longitude) {
-                site.is_also_evacuation_shelter ? marker = createAggregateMarker(site, data.shelters.find(shelter => (shelter.address === site.address))) : marker = createSiteMarker(site);
-                evacuationSiteLayer.addLayer(marker);
+            const bindedShelter = data.shelters.find(s => s.address === site.address);
+
+            if (site.is_also_evacuation_shelter && !bindedShelter) {
+                console.warn("no binded shelter despite is_also_evacuation_shelter is true:", site.shelter_name, site.address);
             }
+
+            // FIX: fall back to plain site marker when flag is set but no match found
+            const marker = site.is_also_evacuation_shelter
+                ? createAggregateMarkerFromSite(site, bindedShelter)  // bindedShelter may be undefined, handled inside
+                : createSiteMarker(site);
+
+            evacuationSiteLayer.addLayer(marker);
         });
 
         evacuationSiteLayer.addTo(baseMap);
 
-        // --- Shelters ---
-        if (!evacuationShelterLayer) {
-            evacuationShelterLayer = L.layerGroup();
-        }
+        if (!evacuationShelterLayer) evacuationShelterLayer = L.layerGroup();
 
-        // filter aggregated site
         data.shelters.forEach(shelter => {
-            if (!shelter.is_also_evacuation_site && shelter.latitude && shelter.longitude) {
-                const marker = createShelterMarker(shelter);
-                evacuationShelterLayer.addLayer(marker);
+            if (!shelter.latitude || !shelter.longitude) return;
+
+            const bindedSite = data.sites.find(s => s.address === shelter.address);
+
+            if (shelter.is_also_evacuation_site && !bindedSite) {
+                console.warn("no binded site despite is_also_evacuation_site is true:", shelter.shelter_name, shelter.address);
             }
+
+            // FIX: use dedicated shelter-anchored aggregate builder; bindedSite may be undefined, handled inside
+            const marker = shelter.is_also_evacuation_site
+                ? createAggregateMarkerFromShelter(shelter, bindedSite)
+                : createShelterMarker(shelter);
+
+            evacuationShelterLayer.addLayer(marker);
         });
 
         evacuationShelterLayer.addTo(baseMap);
 
     } catch (error) {
-        console.log(error);
+        console.error(error);
         alert("避難情報の取得に失敗しました");
     }
 }
